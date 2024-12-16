@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pac-Man Gra</title>
+    <title>Pac-Man Clone</title>
     <style>
         body {
             margin: 0;
@@ -12,8 +12,6 @@
             align-items: center;
             height: 100vh;
             background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
         }
         canvas {
             border: 2px solid white;
@@ -22,132 +20,100 @@
     </style>
 </head>
 <body>
-
-<canvas id="graPłótno" width="350" height="350"></canvas>
-
+<canvas id="gameCanvas" width="448" height="576"></canvas>
 <script>
-const płótno = document.getElementById('graPłótno');
-const kontekst = płótno.getContext('2d');
-const rozmiarPola = 50;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-// 0 - puste, 1 - ściana, 2 - pacman, 3 - duch
-const mapaGry = [
-    [1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 2, 0, 3, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1]
+// Rozmiar kratki
+const TILE_SIZE = 32;
+const ROWS = 18;
+const COLS = 14;
+
+// Mapa gry: 0 - pusty, 1 - ściana, 2 - kropka
+const map = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,2,2,2,1,1,1,2,2,2,0,0,1],
+    [1,2,1,1,2,2,2,2,2,1,1,2,1,1],
+    [1,2,1,1,2,1,1,1,2,1,1,2,1,1],
+    [1,2,2,2,2,1,1,1,2,2,2,2,2,1],
+    [1,2,1,1,2,2,2,2,2,1,1,2,2,1],
+    [1,2,1,1,1,1,1,1,1,1,1,2,1,1],
+    [1,2,2,2,2,2,1,2,2,2,2,2,2,1],
+    [1,1,1,1,1,2,1,2,1,1,1,1,1,1],
+    [1,2,2,2,2,2,1,2,2,2,2,2,2,1],
+    [1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+    [1,2,2,2,2,1,1,1,2,2,2,2,2,1],
+    [1,1,1,1,2,1,1,1,2,1,1,1,1,1],
+    [1,0,2,2,2,1,1,1,2,2,2,0,2,1],
+    [1,2,1,1,2,2,2,2,2,1,1,2,1,1],
+    [1,2,1,1,1,1,1,1,1,1,1,2,1,1],
+    [1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
 
-let pacMan = { x: 2, y: 3, kierunek: 'PRAWO' }; // Startowa pozycja Pac-Mana
-let duch = { x: 4, y: 3 }; // Startowa pozycja ducha
+// Pozycja Pac-Mana
+let pacMan = { x: 1, y: 1, direction: 'RIGHT' };
 
-function rysujMapę() {
-    kontekst.clearRect(0, 0, płótno.width, płótno.height);
-
-    // Rysuj mapę
-    for (let y = 0; y < mapaGry.length; y++) {
-        for (let x = 0; x < mapaGry[y].length; x++) {
-            if (mapaGry[y][x] === 1) {
-                kontekst.fillStyle = 'blue';
-                kontekst.fillRect(x * rozmiarPola, y * rozmiarPola, rozmiarPola, rozmiarPola);
+// Rysowanie mapy
+function drawMap() {
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            if (map[y][x] === 1) {
+                ctx.fillStyle = 'blue';
+                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            } else if (map[y][x] === 2) {
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2, 4, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
     }
+}
 
-    // Rysuj Pac-Mana
-    kontekst.fillStyle = 'yellow';
-    kontekst.beginPath();
-    kontekst.arc(
-        pacMan.x * rozmiarPola + rozmiarPola / 2,
-        pacMan.y * rozmiarPola + rozmiarPola / 2,
-        rozmiarPola / 2 - 5, 0.2 * Math.PI, 1.8 * Math.PI
+// Rysowanie Pac-Mana
+function drawPacMan() {
+    ctx.fillStyle = 'yellow';
+    ctx.beginPath();
+    ctx.arc(
+        pacMan.x * TILE_SIZE + TILE_SIZE / 2,
+        pacMan.y * TILE_SIZE + TILE_SIZE / 2,
+        TILE_SIZE / 2 - 2,
+        0.2 * Math.PI,
+        1.8 * Math.PI
     );
-    kontekst.lineTo(pacMan.x * rozmiarPola + rozmiarPola / 2, pacMan.y * rozmiarPola + rozmiarPola / 2);
-    kontekst.fill();
-
-    // Rysuj ducha
-    kontekst.fillStyle = 'red';
-    kontekst.beginPath();
-    kontekst.arc(
-        duch.x * rozmiarPola + rozmiarPola / 2,
-        duch.y * rozmiarPola + rozmiarPola / 2,
-        rozmiarPola / 2 - 5, 0, 2 * Math.PI
-    );
-    kontekst.fill();
+    ctx.lineTo(pacMan.x * TILE_SIZE + TILE_SIZE / 2, pacMan.y * TILE_SIZE + TILE_SIZE / 2);
+    ctx.fill();
 }
 
-function przesunPacMana() {
-    let następnyX = pacMan.x;
-    let następnyY = pacMan.y;
-
-    switch (pacMan.kierunek) {
-        case 'GÓRA': następnyY--; break;
-        case 'DÓŁ': następnyY++; break;
-        case 'LEWO': następnyX--; break;
-        case 'PRAWO': następnyX++; break;
-    }
-
-    if (mapaGry[następnyY] && mapaGry[następnyY][następnyX] === 0) {
-        pacMan.x = następnyX;
-        pacMan.y = następnyY;
-    }
+// Aktualizacja gry
+function update() {
+    if (pacMan.direction === 'RIGHT' && map[pacMan.y][pacMan.x + 1] !== 1) pacMan.x++;
+    else if (pacMan.direction === 'LEFT' && map[pacMan.y][pacMan.x - 1] !== 1) pacMan.x--;
+    else if (pacMan.direction === 'UP' && map[pacMan.y - 1][pacMan.x] !== 1) pacMan.y--;
+    else if (pacMan.direction === 'DOWN' && map[pacMan.y + 1][pacMan.x] !== 1) pacMan.y++;
 }
 
-function przesunDucha() {
-    const kierunki = ['GÓRA', 'DÓŁ', 'LEWO', 'PRAWO'];
-    const losowyKierunek = kierunki[Math.floor(Math.random() * kierunki.length)];
-    let następnyX = duch.x;
-    let następnyY = duch.y;
-
-    switch (losowyKierunek) {
-        case 'GÓRA': następnyY--; break;
-        case 'DÓŁ': następnyY++; break;
-        case 'LEWO': następnyX--; break;
-        case 'PRAWO': następnyX++; break;
-    }
-
-    if (mapaGry[następnyY] && mapaGry[następnyY][następnyX] === 0) {
-        duch.x = następnyX;
-        duch.y = następnyY;
-    }
+// Główna pętla gry
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawMap();
+    drawPacMan();
+    update();
+    requestAnimationFrame(gameLoop);
 }
 
-function sprawdźKolizję() {
-    if (pacMan.x === duch.x && pacMan.y === duch.y) {
-        alert('Koniec gry! Pac-Man został złapany!');
-        resetujGrę();
-    }
-}
-
-function resetujGrę() {
-    pacMan = { x: 2, y: 3, kierunek: 'PRAWO' };
-    duch = { x: 4, y: 3 };
-}
-
-function pętlaGry() {
-    przesunPacMana();
-    przesunDucha();
-    sprawdźKolizję();
-    rysujMapę();
-    requestAnimationFrame(pętlaGry);
-}
-
+// Obsługa klawiszy
 window.addEventListener('keydown', (e) => {
-    switch (e.key) {
-        case 'ArrowUp': pacMan.kierunek = 'GÓRA'; break;
-        case 'ArrowDown': pacMan.kierunek = 'DÓŁ'; break;
-        case 'ArrowLeft': pacMan.kierunek = 'LEWO'; break;
-        case 'ArrowRight': pacMan.kierunek = 'PRAWO'; break;
-    }
+    if (e.key === 'ArrowRight') pacMan.direction = 'RIGHT';
+    if (e.key === 'ArrowLeft') pacMan.direction = 'LEFT';
+    if (e.key === 'ArrowUp') pacMan.direction = 'UP';
+    if (e.key === 'ArrowDown') pacMan.direction = 'DOWN';
 });
 
-// Start gry
-rysujMapę();
-pętlaGry();
+// Uruchomienie gry
+gameLoop();
 </script>
-
 </body>
 </html>
