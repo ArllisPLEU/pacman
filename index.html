@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pac-Man Gra</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid white;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<canvas id="graP³ótno" width="350" height="350"></canvas>
+
+<script>
+const p³ótno = document.getElementById('graP³ótno');
+const kontekst = p³ótno.getContext('2d');
+const rozmiarPola = 50;
+
+const mapaGry = [
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 2, 0, 3, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1]
+];
+
+let pacMan = { x: 0, y: 0, kierunek: 'PRAWO' };
+let duch = { x: 0, y: 0 };
+
+function inicjalizujGrê() {
+    console.log("Inicjalizacja gry...");
+    mapaGry.forEach((wiersz, y) => {
+        wiersz.forEach((pole, x) => {
+            if (pole === 2) {
+                pacMan.x = x;
+                pacMan.y = y;
+                mapaGry[y][x] = 0;
+            } else if (pole === 3) {
+                duch.x = x;
+                duch.y = y;
+                mapaGry[y][x] = 0;
+            }
+        });
+    });
+}
+
+function rysujMapê() {
+    kontekst.clearRect(0, 0, p³ótno.width, p³ótno.height);
+
+    mapaGry.forEach((wiersz, y) => {
+        wiersz.forEach((pole, x) => {
+            if (pole === 1) {
+                kontekst.fillStyle = 'blue';
+                kontekst.fillRect(x * rozmiarPola, y * rozmiarPola, rozmiarPola, rozmiarPola);
+            }
+        });
+    });
+
+    kontekst.fillStyle = 'yellow';
+    kontekst.beginPath();
+    kontekst.arc(
+        pacMan.x * rozmiarPola + rozmiarPola / 2,
+        pacMan.y * rozmiarPola + rozmiarPola / 2,
+        rozmiarPola / 2 - 5, 0.2 * Math.PI, 1.8 * Math.PI
+    );
+    kontekst.lineTo(pacMan.x * rozmiarPola + rozmiarPola / 2, pacMan.y * rozmiarPola + rozmiarPola / 2);
+    kontekst.fill();
+
+    kontekst.fillStyle = 'red';
+    kontekst.beginPath();
+    kontekst.arc(
+        duch.x * rozmiarPola + rozmiarPola / 2,
+        duch.y * rozmiarPola + rozmiarPola / 2,
+        rozmiarPola / 2 - 5, 0, 2 * Math.PI
+    );
+    kontekst.fill();
+}
+
+function przesunPacMana() {
+    let nastêpnyX = pacMan.x;
+    let nastêpnyY = pacMan.y;
+
+    switch (pacMan.kierunek) {
+        case 'GÓRA': nastêpnyY--; break;
+        case 'DÓ£': nastêpnyY++; break;
+        case 'LEWO': nastêpnyX--; break;
+        case 'PRAWO': nastêpnyX++; break;
+    }
+
+    if (mapaGry[nastêpnyY] && mapaGry[nastêpnyY][nastêpnyX] === 0) {
+        pacMan.x = nastêpnyX;
+        pacMan.y = nastêpnyY;
+    }
+}
+
+function sprawdŸKolizjê() {
+    if (pacMan.x === duch.x && pacMan.y === duch.y) {
+        alert('Koniec gry!');
+        inicjalizujGrê();
+    }
+}
+
+function pêtlaGry() {
+    przesunPacMana();
+    sprawdŸKolizjê();
+    rysujMapê();
+    requestAnimationFrame(pêtlaGry);
+}
+
+window.addEventListener('keydown', (e) => {
+    console.log(`Naciœniêto: ${e.key}`);
+    switch (e.key) {
+        case 'ArrowUp': pacMan.kierunek = 'GÓRA'; break;
+        case 'ArrowDown': pacMan.kierunek = 'DÓ£'; break;
+        case 'ArrowLeft': pacMan.kierunek = 'LEWO'; break;
+        case 'ArrowRight': pacMan.kierunek = 'PRAWO'; break;
+    }
+});
+
+inicjalizujGrê();
+rysujMapê();
+pêtlaGry();
+</script>
+</body>
+</html>
